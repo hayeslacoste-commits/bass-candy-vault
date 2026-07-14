@@ -1,61 +1,32 @@
 import { createServerFn } from "@tanstack/react-start";
-import { useSession } from "@tanstack/react-start/server";
-import { createHash, timingSafeEqual, randomUUID } from "node:crypto";
-
-type GateSession = { unlocked?: boolean };
-
-function sessionConfig() {
-  return {
-    password: process.env.SESSION_SECRET!,
-    name: "chuck-admin",
-    maxAge: 60 * 60 * 24 * 30,
-    cookie: {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax" as const,
-      path: "/",
-    },
-  };
-}
-
-function passwordMatches(input: string, expected: string): boolean {
-  const a = createHash("sha256").update(input, "utf8").digest();
-  const b = createHash("sha256").update(expected, "utf8").digest();
-  return timingSafeEqual(a, b);
-}
-
-async function requireUnlocked() {
-  const session = await useSession<GateSession>(sessionConfig());
-  if (!session.data.unlocked) {
-    throw new Error("Not authorized");
-  }
-}
+import { randomUUID } from "node:crypto";
 
 export const unlockAdmin = createServerFn({ method: "POST" })
   .inputValidator((data: { password: string }) => data)
   .handler(async ({ data }) => {
+    const { passwordMatches, getGateSession } = await import("./admin-gate.server");
     const expected = process.env.SITE_PASSWORD;
     if (!expected) throw new Error("SITE_PASSWORD not set");
-    if (!passwordMatches(data.password, expected)) {
-      return { ok: false as const };
-    }
-    const session = await useSession<GateSession>(sessionConfig());
+    if (!passwordMatches(data.password, expected)) return { ok: false as const };
+    const session = await getGateSession();
     await session.update({ unlocked: true });
     return { ok: true as const };
   });
 
 export const lockAdmin = createServerFn({ method: "POST" }).handler(async () => {
-  const session = await useSession<GateSession>(sessionConfig());
+  const { getGateSession } = await import("./admin-gate.server");
+  const session = await getGateSession();
   await session.clear();
   return { ok: true as const };
 });
 
 export const isUnlocked = createServerFn({ method: "GET" }).handler(async () => {
-  const session = await useSession<GateSession>(sessionConfig());
+  const { getGateSession } = await import("./admin-gate.server");
+  const session = await getGateSession();
   return { unlocked: !!session.data.unlocked };
 });
 
-type Bait = {
+export type Bait = {
   id: string;
   name: string;
   description: string | null;
@@ -64,18 +35,6 @@ type Bait = {
   created_at: string;
 };
 
-async function withSignedUrls(rows: Array<Omit<Bait, "image_url"> & { image_url: string }>) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const results: Bait[] = [];
-  for (const row of rows) {
-    const { data } = await supabaseAdmin.storage
-      .from("bait-images")
-      .createSignedUrl(row.image_url, 60 * 60 * 24 * 7);
-    results.push({ ...row, image_url: data?.signedUrl ?? "" });
-  }
-  return results;
-}
-
 export const listBaits = createServerFn({ method: "GET" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
@@ -83,7 +42,15 @@ export const listBaits = createServerFn({ method: "GET" }).handler(async () => {
     .select("id, name, description, stock, image_url, created_at")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return withSignedUrls(data ?? []);
+  const rows = data ?? [];
+  const results: Bait[] = [];
+  for (const row of rows) {
+    const { data: signed } = await supabaseAdmin.storage
+      .from("bait-images")
+      .createSignedUrl(row.image_url, 60 * 60 * 24 * 7);
+    results.push({ ...row, image_url: signed?.signedUrl ?? "" });
+  }
+  return results;
 });
 
 export const addBait = createServerFn({ method: "POST" })
@@ -97,6 +64,7 @@ export const addBait = createServerFn({ method: "POST" })
     }) => data,
   )
   .handler(async ({ data }) => {
+    const { requireUnlocked } = await import("./admin-gate.server");
     await requireUnlocked();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const ext = (data.imageType.split("/")[1] || "jpg").replace(/[^a-z0-9]/gi, "");
@@ -119,6 +87,7 @@ export const addBait = createServerFn({ method: "POST" })
 export const deleteBait = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
+    const { requireUnlocked } = await import("./admin-gate.server");
     await requireUnlocked();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
@@ -137,6 +106,7 @@ export const deleteBait = createServerFn({ method: "POST" })
 export const updateStock = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string; stock: number }) => data)
   .handler(async ({ data }) => {
+    const { requireUnlocked } = await import("./admin-gate.server");
     await requireUnlocked();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
