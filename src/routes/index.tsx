@@ -159,7 +159,7 @@ function Home() {
           Custom orders, restock questions, pond stories — send it over. Chuck reads everything.
         </p>
         <a
-          href="mailto:chuck@bass-candy.com"
+          href="mailto:hayeslacoste@gmail.com"
           className="mt-8 inline-flex items-center justify-center rounded-md bg-accent px-8 py-4 font-display text-2xl text-accent-foreground hover:brightness-110"
         >
           Contact Me
