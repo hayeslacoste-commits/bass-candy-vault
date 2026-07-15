@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listBaits } from "@/lib/admin.functions";
+import heroBass from "@/assets/hero-bass.jpg.asset.json";
 import catch1 from "@/assets/82748A28-9213-4E9D-B4A7-3AE825EF66E2.jpg.asset.json";
 import catch2 from "@/assets/F547A16B-B798-466E-A5B4-DB3098B4C5A5.jpg.asset.json";
 import catch3 from "@/assets/45585ECA-8E37-4D8F-B791-D08308CED42D.jpg.asset.json";
@@ -34,9 +35,15 @@ function Home() {
             <span className="font-display text-2xl leading-none text-primary">Chuck's</span>
             <span className="font-display text-2xl leading-none text-accent">Bass Candy</span>
           </Link>
-          <nav className="flex items-center gap-4 text-sm font-medium">
+          <nav className="flex items-center gap-3 text-sm font-medium sm:gap-4">
             <a href="#baits" className="hover:text-primary">Baits</a>
             <a href="#gallery" className="hidden sm:inline hover:text-primary">Wall of Fame</a>
+            <Link
+              to="/admin"
+              className="rounded-md border border-border bg-card px-3 py-1.5 hover:bg-accent hover:text-accent-foreground"
+            >
+              Owner sign in
+            </Link>
             <a href="#contact" className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground hover:bg-primary/90">
               Contact
             </a>
@@ -48,7 +55,7 @@ function Home() {
       <section className="relative overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-40"
-          style={{ backgroundImage: `url(${catch1.url})` }}
+          style={{ backgroundImage: `url(${heroBass.url})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background" />
         <div className="relative mx-auto max-w-6xl px-4 py-24 sm:py-32">
