@@ -231,7 +231,7 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
               <div className="flex-1 min-w-0">
                 <h3 className="font-display text-xl text-primary truncate">{b.name}</h3>
                 {b.description && <p className="text-xs text-muted-foreground line-clamp-2">{b.description}</p>}
-                <div className="mt-2 flex items-center gap-2">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   <label className="text-xs text-muted-foreground">Stock</label>
                   <input type="number" min={0} defaultValue={b.stock}
                     onBlur={(e) => {
@@ -239,6 +239,13 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
                       if (v !== b.stock) onStockChange(b.id, v);
                     }}
                     className="w-20 rounded-md border border-input bg-background px-2 py-1 text-sm" />
+                  <label className="text-xs text-muted-foreground">$</label>
+                  <input type="number" min={0} step="0.01" defaultValue={(b.price_cents / 100).toFixed(2)}
+                    onBlur={(e) => {
+                      const v = parseFloat(e.target.value || "0");
+                      if (Math.round(v * 100) !== b.price_cents) onPriceChange(b.id, v);
+                    }}
+                    className="w-24 rounded-md border border-input bg-background px-2 py-1 text-sm" />
                   <button onClick={() => onDelete(b.id)}
                     className="ml-auto text-xs text-destructive hover:underline">
                     Delete
