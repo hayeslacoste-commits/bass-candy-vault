@@ -192,6 +192,13 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2" />
           </label>
           <label className="block text-sm sm:col-span-2">
+            Price (USD)
+            <input required type="number" min={0} step="0.01" value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="e.g. 8.99"
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2" />
+          </label>
+          <label className="block text-sm sm:col-span-2">
             Description (optional)
             <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={2}
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2" />
