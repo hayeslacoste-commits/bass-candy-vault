@@ -10,6 +10,7 @@ import {
   addBait,
   deleteBait,
   updateStock,
+  updatePrice,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
