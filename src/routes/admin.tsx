@@ -155,6 +155,11 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
     await qc.invalidateQueries({ queryKey: ["baits"] });
   }
 
+  async function onPriceChange(id: string, dollars: number) {
+    await priceFn({ data: { id, priceCents: Math.round(dollars * 100) } });
+    await qc.invalidateQueries({ queryKey: ["baits"] });
+  }
+
   async function onLock() {
     await lockFn();
     onLocked();
