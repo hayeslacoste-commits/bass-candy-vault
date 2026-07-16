@@ -10,6 +10,7 @@ import {
   addBait,
   deleteBait,
   updateStock,
+  updatePrice,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
@@ -108,6 +109,7 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
   const addFn = useServerFn(addBait);
   const delFn = useServerFn(deleteBait);
   const stockFn = useServerFn(updateStock);
+  const priceFn = useServerFn(updatePrice);
 
   const { data: baits } = useQuery({
     queryKey: ["baits"],
@@ -117,6 +119,7 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [stock, setStock] = useState(1);
+  const [price, setPrice] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [pending, setPending] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -128,8 +131,9 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
     setMsg(null);
     try {
       const { base64, type } = await fileToBase64(file);
-      await addFn({ data: { name, description: desc, stock, imageBase64: base64, imageType: type } });
-      setName(""); setDesc(""); setStock(1); setFile(null);
+      const priceCents = Math.round(parseFloat(price || "0") * 100);
+      await addFn({ data: { name, description: desc, stock, priceCents, imageBase64: base64, imageType: type } });
+      setName(""); setDesc(""); setStock(1); setPrice(""); setFile(null);
       (document.getElementById("bait-file") as HTMLInputElement | null)?.value && ((document.getElementById("bait-file") as HTMLInputElement).value = "");
       await qc.invalidateQueries({ queryKey: ["baits"] });
       setMsg("Added.");
@@ -148,6 +152,11 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
 
   async function onStockChange(id: string, s: number) {
     await stockFn({ data: { id, stock: s } });
+    await qc.invalidateQueries({ queryKey: ["baits"] });
+  }
+
+  async function onPriceChange(id: string, dollars: number) {
+    await priceFn({ data: { id, priceCents: Math.round(dollars * 100) } });
     await qc.invalidateQueries({ queryKey: ["baits"] });
   }
 
@@ -183,6 +192,13 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2" />
           </label>
           <label className="block text-sm sm:col-span-2">
+            Price (USD)
+            <input required type="number" min={0} step="0.01" value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="e.g. 8.99"
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2" />
+          </label>
+          <label className="block text-sm sm:col-span-2">
             Description (optional)
             <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={2}
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2" />
@@ -215,7 +231,7 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
               <div className="flex-1 min-w-0">
                 <h3 className="font-display text-xl text-primary truncate">{b.name}</h3>
                 {b.description && <p className="text-xs text-muted-foreground line-clamp-2">{b.description}</p>}
-                <div className="mt-2 flex items-center gap-2">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   <label className="text-xs text-muted-foreground">Stock</label>
                   <input type="number" min={0} defaultValue={b.stock}
                     onBlur={(e) => {
@@ -223,6 +239,13 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
                       if (v !== b.stock) onStockChange(b.id, v);
                     }}
                     className="w-20 rounded-md border border-input bg-background px-2 py-1 text-sm" />
+                  <label className="text-xs text-muted-foreground">$</label>
+                  <input type="number" min={0} step="0.01" defaultValue={(b.price_cents / 100).toFixed(2)}
+                    onBlur={(e) => {
+                      const v = parseFloat(e.target.value || "0");
+                      if (Math.round(v * 100) !== b.price_cents) onPriceChange(b.id, v);
+                    }}
+                    className="w-24 rounded-md border border-input bg-background px-2 py-1 text-sm" />
                   <button onClick={() => onDelete(b.id)}
                     className="ml-auto text-xs text-destructive hover:underline">
                     Delete
