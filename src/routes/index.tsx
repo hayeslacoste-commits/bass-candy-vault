@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { listBaits } from "@/lib/admin.functions";
+import { useEffect, useMemo, useState } from "react";
+import { listBaits, type Bait } from "@/lib/admin.functions";
 import heroBass from "@/assets/hero-bass.jpg.asset.json";
 import catch1 from "@/assets/82748A28-9213-4E9D-B4A7-3AE825EF66E2.jpg.asset.json";
 import catch2 from "@/assets/F547A16B-B798-466E-A5B4-DB3098B4C5A5.jpg.asset.json";
@@ -19,12 +20,56 @@ const galleryImages = [
   { src: catch2.url, caption: "First cast, first fish. That's the candy." },
 ];
 
+const CART_KEY = "chuck-cart-v1";
+type Cart = Record<string, number>;
+
+function readCart(): Cart {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(localStorage.getItem(CART_KEY) || "{}"); } catch { return {}; }
+}
+function writeCart(c: Cart) {
+  localStorage.setItem(CART_KEY, JSON.stringify(c));
+  window.dispatchEvent(new Event("cart:update"));
+}
+const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
 function Home() {
   const fetchBaits = useServerFn(listBaits);
   const { data: baits, isLoading } = useQuery({
     queryKey: ["baits"],
     queryFn: () => fetchBaits(),
   });
+
+  const [cart, setCart] = useState<Cart>({});
+  const [cartOpen, setCartOpen] = useState(false);
+
+  useEffect(() => {
+    setCart(readCart());
+    const sync = () => setCart(readCart());
+    window.addEventListener("cart:update", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("cart:update", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  const cartCount = useMemo(() => Object.values(cart).reduce((a, b) => a + b, 0), [cart]);
+
+  function addToCart(b: Bait) {
+    const next = { ...readCart() };
+    const current = next[b.id] || 0;
+    if (current + 1 > b.stock) return;
+    next[b.id] = current + 1;
+    writeCart(next);
+    setCartOpen(true);
+  }
+  function setQty(id: string, qty: number, max: number) {
+    const next = { ...readCart() };
+    const q = Math.max(0, Math.min(qty, max));
+    if (q === 0) delete next[id]; else next[id] = q;
+    writeCart(next);
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,9 +89,17 @@ function Home() {
             >
               Owner sign in
             </Link>
-            <a href="#contact" className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground hover:bg-primary/90">
-              Contact
-            </a>
+            <button
+              onClick={() => setCartOpen(true)}
+              className="relative rounded-md bg-primary px-3 py-1.5 text-primary-foreground hover:bg-primary/90"
+            >
+              Cart
+              {cartCount > 0 && (
+                <span className="ml-1 rounded-full bg-accent px-1.5 py-0.5 text-xs text-accent-foreground">
+                  {cartCount}
+                </span>
+              )}
+            </button>
           </nav>
         </div>
       </header>
@@ -100,35 +153,48 @@ function Home() {
 
         {baits && baits.length > 0 && (
           <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {baits.map((b) => (
-              <article key={b.id} className="group overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:shadow-md">
-                <div className="aspect-square overflow-hidden bg-muted">
-                  <img
-                    src={b.image_url}
-                    alt={b.name}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-display text-2xl leading-tight text-primary">{b.name}</h3>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${
-                        b.stock > 0
-                          ? "bg-primary/10 text-primary"
-                          : "bg-destructive/10 text-destructive"
-                      }`}
-                    >
-                      {b.stock > 0 ? `${b.stock} in stock` : "Sold out"}
-                    </span>
+            {baits.map((b) => {
+              const inCart = cart[b.id] || 0;
+              const soldOut = b.stock <= 0;
+              const maxed = inCart >= b.stock;
+              return (
+                <article key={b.id} className="group overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:shadow-md">
+                  <div className="aspect-square overflow-hidden bg-muted">
+                    <img
+                      src={b.image_url}
+                      alt={b.name}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
                   </div>
-                  {b.description && (
-                    <p className="mt-2 text-sm text-muted-foreground">{b.description}</p>
-                  )}
-                </div>
-              </article>
-            ))}
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="font-display text-2xl leading-tight text-primary">{b.name}</h3>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${
+                          b.stock > 0 ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
+                        }`}
+                      >
+                        {b.stock > 0 ? `${b.stock} in stock` : "Sold out"}
+                      </span>
+                    </div>
+                    {b.description && (
+                      <p className="mt-2 text-sm text-muted-foreground">{b.description}</p>
+                    )}
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <span className="font-display text-2xl text-accent">{money(b.price_cents)}</span>
+                      <button
+                        onClick={() => addToCart(b)}
+                        disabled={soldOut || maxed}
+                        className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                      >
+                        {soldOut ? "Sold out" : maxed ? "Max in cart" : "Add to cart"}
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
@@ -170,6 +236,70 @@ function Home() {
         © {new Date().getFullYear()} Chuck's Bass Candy ·{" "}
         <Link to="/admin" className="hover:text-primary">Owner login</Link>
       </footer>
+
+      {/* CART DRAWER */}
+      {cartOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div className="flex-1 bg-black/50" onClick={() => setCartOpen(false)} />
+          <aside className="w-full max-w-md bg-background border-l border-border flex flex-col">
+            <div className="flex items-center justify-between border-b border-border p-4">
+              <h3 className="font-display text-2xl text-primary">Your Cart</h3>
+              <button onClick={() => setCartOpen(false)} className="text-sm hover:text-primary">Close</button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {cartCount === 0 && (
+                <p className="text-sm text-muted-foreground">Cart's empty. Go grab some candy.</p>
+              )}
+              {baits?.filter((b) => cart[b.id]).map((b) => {
+                const qty = cart[b.id];
+                return (
+                  <div key={b.id} className="flex gap-3 rounded-md border border-border bg-card p-3">
+                    <img src={b.image_url} alt={b.name} className="h-16 w-16 rounded-md object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between gap-2">
+                        <p className="font-display text-lg text-primary truncate">{b.name}</p>
+                        <p className="text-sm text-accent">{money(b.price_cents * qty)}</p>
+                      </div>
+                      <div className="mt-2 flex items-center gap-2">
+                        <button onClick={() => setQty(b.id, qty - 1, b.stock)} className="rounded border border-border px-2">−</button>
+                        <span className="text-sm w-6 text-center">{qty}</span>
+                        <button onClick={() => setQty(b.id, qty + 1, b.stock)} disabled={qty >= b.stock} className="rounded border border-border px-2 disabled:opacity-40">+</button>
+                        <button onClick={() => setQty(b.id, 0, b.stock)} className="ml-auto text-xs text-destructive hover:underline">Remove</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {cartCount > 0 && baits && (
+              <div className="border-t border-border p-4 space-y-3">
+                <div className="flex justify-between font-display text-xl">
+                  <span>Total</span>
+                  <span className="text-accent">
+                    {money(baits.reduce((sum, b) => sum + (cart[b.id] || 0) * b.price_cents, 0))}
+                  </span>
+                </div>
+                <a
+                  href={`mailto:chuck@bass-candy.com?subject=${encodeURIComponent("Bass Candy order")}&body=${encodeURIComponent(
+                    "Hey Chuck, I'd like to order:\n\n" +
+                      baits.filter((b) => cart[b.id]).map((b) => `- ${b.name} × ${cart[b.id]} (${money(b.price_cents * cart[b.id])})`).join("\n") +
+                      `\n\nTotal: ${money(baits.reduce((s, b) => s + (cart[b.id] || 0) * b.price_cents, 0))}\n`,
+                  )}`}
+                  className="block w-full rounded-md bg-primary py-3 text-center font-medium text-primary-foreground hover:bg-primary/90"
+                >
+                  Checkout via email
+                </a>
+                <button
+                  onClick={() => writeCart({})}
+                  className="w-full text-xs text-muted-foreground hover:text-destructive"
+                >
+                  Clear cart
+                </button>
+              </div>
+            )}
+          </aside>
+        </div>
+      )}
     </div>
   );
 }
