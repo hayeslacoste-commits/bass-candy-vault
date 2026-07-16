@@ -109,6 +109,7 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
   const addFn = useServerFn(addBait);
   const delFn = useServerFn(deleteBait);
   const stockFn = useServerFn(updateStock);
+  const priceFn = useServerFn(updatePrice);
 
   const { data: baits } = useQuery({
     queryKey: ["baits"],
@@ -118,6 +119,7 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [stock, setStock] = useState(1);
+  const [price, setPrice] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [pending, setPending] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -129,8 +131,9 @@ function Dashboard({ onLocked }: { onLocked: () => void }) {
     setMsg(null);
     try {
       const { base64, type } = await fileToBase64(file);
-      await addFn({ data: { name, description: desc, stock, imageBase64: base64, imageType: type } });
-      setName(""); setDesc(""); setStock(1); setFile(null);
+      const priceCents = Math.round(parseFloat(price || "0") * 100);
+      await addFn({ data: { name, description: desc, stock, priceCents, imageBase64: base64, imageType: type } });
+      setName(""); setDesc(""); setStock(1); setPrice(""); setFile(null);
       (document.getElementById("bait-file") as HTMLInputElement | null)?.value && ((document.getElementById("bait-file") as HTMLInputElement).value = "");
       await qc.invalidateQueries({ queryKey: ["baits"] });
       setMsg("Added.");
