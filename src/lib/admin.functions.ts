@@ -31,6 +31,7 @@ export type Bait = {
   name: string;
   description: string | null;
   stock: number;
+  price_cents: number;
   image_url: string;
   created_at: string;
 };
