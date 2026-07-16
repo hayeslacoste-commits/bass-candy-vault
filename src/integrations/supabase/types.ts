@@ -21,6 +21,7 @@ export type Database = {
           id: string
           image_url: string
           name: string
+          price_cents: number
           stock: number
         }
         Insert: {
@@ -29,6 +30,7 @@ export type Database = {
           id?: string
           image_url: string
           name: string
+          price_cents?: number
           stock?: number
         }
         Update: {
@@ -37,6 +39,7 @@ export type Database = {
           id?: string
           image_url?: string
           name?: string
+          price_cents?: number
           stock?: number
         }
         Relationships: []

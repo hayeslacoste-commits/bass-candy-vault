@@ -1,0 +1,1 @@
+ALTER TABLE public.baits ADD COLUMN IF NOT EXISTS price_cents integer NOT NULL DEFAULT 0;
