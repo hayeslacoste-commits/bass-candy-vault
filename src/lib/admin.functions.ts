@@ -40,7 +40,7 @@ export const listBaits = createServerFn({ method: "GET" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("baits")
-    .select("id, name, description, stock, image_url, created_at")
+    .select("id, name, description, stock, price_cents, image_url, created_at")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   const rows = data ?? [];
@@ -60,6 +60,7 @@ export const addBait = createServerFn({ method: "POST" })
       name: string;
       description: string;
       stock: number;
+      priceCents: number;
       imageBase64: string;
       imageType: string;
     }) => data,
@@ -79,9 +80,24 @@ export const addBait = createServerFn({ method: "POST" })
       name: data.name,
       description: data.description || null,
       stock: data.stock,
+      price_cents: data.priceCents,
       image_url: path,
     });
     if (insErr) throw new Error(insErr.message);
+    return { ok: true as const };
+  });
+
+export const updatePrice = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: string; priceCents: number }) => data)
+  .handler(async ({ data }) => {
+    const { requireUnlocked } = await import("./admin-gate.server");
+    await requireUnlocked();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("baits")
+      .update({ price_cents: data.priceCents })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
     return { ok: true as const };
   });
 
