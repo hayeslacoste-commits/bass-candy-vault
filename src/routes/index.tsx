@@ -290,7 +290,8 @@ function Home() {
                     if (!email) return;
                     const lines = baits.filter((b) => cart[b.id]).map((b) => `- ${b.name} × ${cart[b.id]} (${money(b.price_cents * cart[b.id])})`).join("\n");
                     const total = money(baits.reduce((s, b) => s + (cart[b.id] || 0) * b.price_cents, 0));
-                    window.location.href = `mailto:Charlieklutts2@gmail.com?subject=${encodeURIComponent("Bass Candy order")}&body=${encodeURIComponent(`From: ${email}\n\nHey Chuck, I'd like to order:\n\n${lines}\n\nTotal: ${total}\n`)}`;
+                    const url = `https://mail.google.com/mail/?view=cm&fs=1&to=Charlieklutts2@gmail.com&su=${encodeURIComponent("Bass Candy order")}&body=${encodeURIComponent(`From: ${email}\n\nHey Chuck, I'd like to order:\n\n${lines}\n\nTotal: ${total}\n`)}`;
+                    window.open(url, "_blank", "noopener,noreferrer");
                   }}
                   className="block w-full rounded-md bg-primary py-3 text-center font-medium text-primary-foreground hover:bg-primary/90"
                 >
