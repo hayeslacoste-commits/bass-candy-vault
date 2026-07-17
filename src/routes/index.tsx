@@ -226,9 +226,7 @@ function Home() {
         </p>
         <button
           onClick={() => {
-            const email = window.prompt("Enter your email so Chuck can reply:");
-            if (!email) return;
-            const url = `https://mail.google.com/mail/?view=cm&fs=1&to=Charlieklutts2@gmail.com&su=${encodeURIComponent("Bass Candy inquiry")}&body=${encodeURIComponent(`From: ${email}\n\n`)}`;
+            const url = `https://mail.google.com/mail/?view=cm&fs=1&to=Charlieklutts2@gmail.com&su=${encodeURIComponent("Bass Candy inquiry")}`;
             window.open(url, "_blank", "noopener,noreferrer");
           }}
           className="mt-8 inline-flex items-center justify-center rounded-md bg-accent px-8 py-4 font-display text-2xl text-accent-foreground hover:brightness-110"
