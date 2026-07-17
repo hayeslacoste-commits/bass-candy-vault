@@ -225,7 +225,7 @@ function Home() {
           Custom orders, restock questions, pond stories — send it over. Chuck reads everything.
         </p>
         <a
-          href="mailto:chuck@bass-candy.com"
+          href="mailto:Charlieklutts2@gmail.com"
           className="mt-8 inline-flex items-center justify-center rounded-md bg-accent px-8 py-4 font-display text-2xl text-accent-foreground hover:brightness-110"
         >
           Contact Me
@@ -280,7 +280,7 @@ function Home() {
                   </span>
                 </div>
                 <a
-                  href={`mailto:chuck@bass-candy.com?subject=${encodeURIComponent("Bass Candy order")}&body=${encodeURIComponent(
+                  href={`mailto:Charlieklutts2@gmail.com?subject=${encodeURIComponent("Bass Candy order")}&body=${encodeURIComponent(
                     "Hey Chuck, I'd like to order:\n\n" +
                       baits.filter((b) => cart[b.id]).map((b) => `- ${b.name} × ${cart[b.id]} (${money(b.price_cents * cart[b.id])})`).join("\n") +
                       `\n\nTotal: ${money(baits.reduce((s, b) => s + (cart[b.id] || 0) * b.price_cents, 0))}\n`,
