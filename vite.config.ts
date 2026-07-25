@@ -1,7 +1,9 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  tanstackStart: {
-    server: { entry: "server" },
+  build: {
+    rollupOptions: {
+      input: {}, // Tells the bundler to skip the standard root index.html check
+    },
   },
 });
