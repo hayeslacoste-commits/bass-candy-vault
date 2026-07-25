@@ -1,9 +1,6 @@
 import { defineConfig } from "vite";
+import { lovableViteConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  build: {
-    rollupOptions: {
-      input: {}, // Tells the bundler to skip the standard root index.html check
-    },
-  },
+  ...lovableViteConfig,
 });
