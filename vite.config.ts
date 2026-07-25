@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
-import lovableViteConfig from "@lovable.dev/vite-tanstack-config";
+import { tanstackStartVite } from "@tanstack/start/vite";
 
 export default defineConfig({
-  ...lovableViteConfig,
+  plugins: [
+    tanstackStartVite()
+  ]
 });
