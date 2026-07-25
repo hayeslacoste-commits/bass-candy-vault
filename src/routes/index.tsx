@@ -16,8 +16,8 @@ export const Route = createFileRoute("/")({
 const galleryImages = [
   { src: catch1.url, caption: "Pondside pig — bagged on a Chuck's original." },
   { src: catch4.url, caption: "Dad's afternoon slab." },
-  { src: catch3.url, caption: "Brothers, one rod, one fat bass." },
-  { src: catch2.url, caption: "First cast, first fish. That's the candy." },
+      { src: "https://sebvfqfbyzqicpjtniuf.supabase.co/storage/v1/object/public/bait/IMG_7590.JPEG", caption: "Brothers, one rod, one fat bass." },
+    { src: "https://sebvfqfbyzqicpjtniuf.supabase.co/storage/v1/object/public/bait/IMG_7595.JPEG", caption: "First cast, first fish. That's the candy." },
 ];
 
 const CART_KEY = "chuck-cart-v1";
