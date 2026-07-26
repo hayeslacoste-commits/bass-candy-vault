@@ -6,12 +6,9 @@ export default defineConfig({
   plugins: [
     tanstackStart({
       server: {
-        entry: "server",
+        preset: "vercel", // This forces Vinxi to build a serverless function structure instead of static HTML files
       },
     }),
     tailwindcss(),
   ],
-  css: {
-    postcss: false, // This forces Vite to bypass looking for any PostCSS files completely
-  },
 });
