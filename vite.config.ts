@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     tanstackStart({
       server: {
-        preset: "vercel", // This forces Vinxi to build a serverless function structure instead of static HTML files
+        preset: "vercel", 
       },
     }),
     tailwindcss(),
