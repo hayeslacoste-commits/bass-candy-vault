@@ -11,4 +11,7 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
+  css: {
+    postcss: false, // This forces Vite to bypass looking for any PostCSS files completely
+  },
 });
